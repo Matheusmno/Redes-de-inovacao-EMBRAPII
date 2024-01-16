@@ -13,15 +13,16 @@ uploaded_file = st.file_uploader("Escolha o arquivo Excel 'Papeis da rede':", ty
 if uploaded_file is not None:
     # Pre processing
     data = pd.read_excel(uploaded_file, sheet_name='Dados', header=1)
-    data['Soma das métricas'] = data['Negociação'] + data['Portfólio'] + data['Relacional'] + data['Processos']
+    data['Soma das métricas'] = data['Prospecção e Negociação'] + data['Gestão de Projetos/PI'] + data['Relacional/\nComunicação'] + data['Padronização da Gestão']
     data.rename(columns={'Classificação': 'Papel de atuação em rede'}, inplace=True)
 
     
     # Sidebar with filters
     st.sidebar.title('Filtros')
     selected_category = st.sidebar.selectbox('Papel da Rede', ["Diamante", "Ouro", "Prata"], index=0)
-    selected_unity = st.sidebar.selectbox('Unidade', np.insert(data['Unidade EMBRAPII'].dropna().unique(), 0, "Todas", axis=0))
-    selected_dimension = st.sidebar.selectbox('Dimensão', ['Negociação', 'Portfólio', 'Relacional', 'Processos'])
+    sorted_unity = np.sort(data['Unidade EMBRAPII'].dropna().unique())
+    selected_unity = st.sidebar.selectbox('Unidade', np.insert(sorted_unity, 0, "Todas", axis=0))
+    selected_dimension = st.sidebar.selectbox('Dimensão', ['Prospecção e Negociação', 'Gestão de Projetos/PI', 'Relacional/\nComunicação', 'Padronização da Gestão'])
     selected_tematicas = st.sidebar.multiselect('Temática', data['CLASSIFICAÇÃO TEMÁTICA EMBRAPII'].dropna().unique())
     selected_tipoue = st.sidebar.multiselect('Tipo da UE', data['TIPO DE INSTITUIÇÃO'].dropna().unique())
 
@@ -46,11 +47,11 @@ if uploaded_file is not None:
     
     if not filtered_data.empty:
         # Create two columns
-        col1, col2 = st.columns(2)
+        #col1, col2 = st.columns(2)
         
         # Scatter Plot
         color_discrete_map = {'DIAMANTE': 'rgb(185,242,255)', 'OURO': 'rgb(255,215,0)', 'PRATA': 'rgb(192,192,192)', 'BRONZE': 'rgb(184,115,51)'}
-        fig_scatter = px.scatter_3d(filtered_data, x='Negociação', y='Portfólio', z='Relacional',
+        fig_scatter = px.scatter_3d(filtered_data, x='Prospecção e Negociação', y='Gestão de Projetos/PI', z='Relacional/\nComunicação',
               color='Papel de atuação em rede', size='Soma das métricas',
               color_discrete_map=color_discrete_map,
               hover_name="Unidade EMBRAPII",
@@ -58,12 +59,12 @@ if uploaded_file is not None:
         hover_template = '%{customdata[0]}'
         fig_scatter.update_traces(hovertemplate=hover_template)
         fig_scatter.update_scenes(xaxis_visible=False, yaxis_visible=False, zaxis_visible=False)
-        col1.plotly_chart(fig_scatter, use_container_width=True)
+        st.plotly_chart(fig_scatter, use_container_width=True)
         
         # Treemap
         treemap_data = filtered_data.groupby(['Papel de atuação em rede']).size().reset_index(name='Count')
         fig_treemap = px.treemap(treemap_data, path=['Papel de atuação em rede'], values='Count', color='Papel de atuação em rede', color_discrete_map=color_discrete_map)
-        col2.plotly_chart(fig_treemap, use_container_width=True)
+        st.plotly_chart(fig_treemap, use_container_width=True)
 
         # Display table with selected columns
         selected_columns_data = filtered_data[['Unidade EMBRAPII', 'CIDADE', 'TIPO DE INSTITUIÇÃO', 'CLASSIFICAÇÃO TEMÁTICA EMBRAPII', 'Papel de atuação em rede']]
@@ -73,7 +74,7 @@ if uploaded_file is not None:
 
     # Card
     st.sidebar.markdown("""
-    <div style="width: 100%; color: white; padding: 20px; border-radius: 5px; font-size: 25px;">
+    <div style="width: 100%; color: rgb(39,100,170); padding: 20px; border-radius: 5px; font-size: 25px;">
     {} <br>
     Unidades EMBRAPII
     </div>
