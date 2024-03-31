@@ -14,8 +14,6 @@ if uploaded_file is not None:
     # Pre processing
     data = pd.read_excel(uploaded_file, sheet_name='Dados', header=1)
     data['Soma das métricas'] = data['Impacto Potencial dos Resultados'] + data['Projetos de PD&I'] + data['Relações com empresas'] + data['QIM ver']
-    data.rename(columns={'Classificação': 'Classificação'}, inplace=True)
-
     
     # Sidebar with filters
     st.sidebar.title('Filtros')
@@ -24,7 +22,7 @@ if uploaded_file is not None:
     selected_unity = st.sidebar.selectbox('Unidade', np.insert(sorted_unity, 0, "Todas", axis=0))
     selected_dimension = st.sidebar.selectbox('Dimensão', ['Impacto Potencial dos Resultados', 'Projetos de PD&I', 'Relações com empresas', 'QIM ver'])
     selected_tematicas = st.sidebar.multiselect('Temática', data['CLASSIFICAÇÃO TEMÁTICA EMBRAPII'].dropna().unique())
-    #selected_tipoue = st.sidebar.multiselect('Tipo da UE', data['TIPO DE INSTITUIÇÃO'].dropna().unique())
+    selected_tipoue = st.sidebar.multiselect('Tipo da UE', data['TIPO DE INSTITUIÇÃO'].dropna().unique())
 
     # Apply filters
     if 'Diamante' in selected_category:
@@ -40,8 +38,8 @@ if uploaded_file is not None:
 
     if selected_tematicas:
         filtered_data = filtered_data[filtered_data['CLASSIFICAÇÃO TEMÁTICA EMBRAPII'].isin(selected_tematicas)]
-    #if selected_tipoue:
-    #    filtered_data = filtered_data[filtered_data['TIPO DE INSTITUIÇÃO'].isin(selected_tipoue)]
+    if selected_tipoue:
+        filtered_data = filtered_data[filtered_data['TIPO DE INSTITUIÇÃO'].isin(selected_tipoue)]
 
     num_unidades = filtered_data['Unidade EMBRAPII'].count()
     
@@ -50,12 +48,18 @@ if uploaded_file is not None:
         #col1, col2 = st.columns(2)
         
         # Scatter Plot
-        color_discrete_map = {'DIAMANTE': 'rgb(185,242,255)', 'OURO': 'rgb(255,215,0)', 'PRATA': 'rgb(192,192,192)', 'BRONZE': 'rgb(184,115,51)'}
-        fig_scatter = px.scatter_3d(filtered_data, x='Impacto Potencial dos Resultados', y='Projetos de PD&I', z='Relações com empresas',
+        color_discrete_map = {'DIAMANTE': 'rgb(185,242,255)',
+                              'OURO': 'rgb(255,215,0)',
+                              'PRATA': 'rgb(192,192,192)',
+                              'BRONZE': 'rgb(184,115,51)'}
+        fig_scatter = px.scatter_3d(filtered_data, x='Impacto Potencial dos Resultados',
+                                    y='Projetos de PD&I',
+                                    z='Relações com empresas',
               color='Classificação', size='Soma das métricas',
               color_discrete_map=color_discrete_map,
               hover_name="Unidade EMBRAPII",
               custom_data=['Unidade EMBRAPII'])
+        
         hover_template = '%{customdata[0]}'
         fig_scatter.update_traces(hovertemplate=hover_template)
         fig_scatter.update_scenes(xaxis_visible=False, yaxis_visible=False, zaxis_visible=False)
@@ -68,7 +72,7 @@ if uploaded_file is not None:
 
         # Display table with selected columns
         selected_columns_data = filtered_data[['Unidade EMBRAPII', 'CIDADE', 
-                                               #'TIPO DE INSTITUIÇÃO', 
+                                               'TIPO DE INSTITUIÇÃO', 
                                                'CLASSIFICAÇÃO TEMÁTICA EMBRAPII', 'Classificação']]
         st.markdown(selected_columns_data.to_html(index=False, escape=False), unsafe_allow_html=True)
     else:
